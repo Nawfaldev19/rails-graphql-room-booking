@@ -1,0 +1,309 @@
+"""
+A room held for a person. Students see other people's bookings without names.
+"""
+type Booking {
+  """
+  An iCalendar file for this booking.
+  """
+  calendarFile: String
+  canCancel: Boolean!
+  canCheckIn: Boolean!
+  canMarkMissed: Boolean!
+  canReschedule: Boolean!
+  cancelReason: String
+  cancelledAfterStart: Boolean!
+  endsAt: ISO8601DateTime!
+  id: ID!
+  isMine: Boolean!
+  lockVersion: Int!
+  note: String
+  personId: ID
+  personName: String
+  room: Room!
+  startsAt: ISO8601DateTime!
+  status: BookingStatusEnum!
+  statusLabel: String!
+}
+
+enum BookingStatusEnum {
+  BOOKED
+  CANCELLED
+  CHECKED_IN
+  MISSED
+}
+
+type Delivery {
+  attempts: Int!
+  body: String!
+  calendarFile: String
+  createdAt: ISO8601DateTime!
+  id: ID!
+  kind: NotificationKindEnum!
+  sentAt: ISO8601DateTime
+  skipReason: String
+  status: DeliveryStatusEnum!
+  subject: String!
+  toEmail: String!
+}
+
+type DeliveryPage {
+  endCursor: String
+  hasNextPage: Boolean!
+  items: [Delivery!]!
+}
+
+enum DeliveryStatusEnum {
+  QUEUED
+  SENT
+  SKIPPED
+}
+
+"""
+An ISO 8601-encoded datetime
+"""
+scalar ISO8601DateTime @specifiedBy(url: "https://tools.ietf.org/html/rfc3339")
+
+"""
+A person's place in one workspace.
+"""
+type Membership {
+  id: ID!
+  instrument: String
+
+  """
+  Details still needed before a first booking. Empty when complete.
+  """
+  missingProfileDetails: [String!]!
+  name: String!
+  phone: String
+  role: RoleEnum!
+  workspace: WorkspaceSummary!
+}
+
+type Mutation {
+  cancelBooking(bookingId: ID!, notify: Boolean = true, reason: String): Booking!
+  createBooking(
+    endsAt: ISO8601DateTime!
+
+    """
+    Staff only: who the booking is for.
+    """
+    membershipId: ID
+    note: String
+
+    """
+    Staff only: whether to tell the person.
+    """
+    notify: Boolean = true
+    roomId: ID!
+    startsAt: ISO8601DateTime!
+  ): Booking!
+  login(email: String!, password: String!): Viewer!
+  logout: Boolean!
+  rescheduleBooking(
+    bookingId: ID!
+    endsAt: ISO8601DateTime!
+
+    """
+    The version the edit started from. A mismatch is a CONFLICT.
+    """
+    lockVersion: Int!
+    notify: Boolean = true
+    roomId: ID!
+    startsAt: ISO8601DateTime!
+  ): Booking!
+
+  """
+  Staff only. Sends what the rate limit allows right now.
+  """
+  sendQueuedMail: OutboxResult!
+
+  """
+  Staff only. Marks a booking as checked in or missed.
+  """
+  setBookingStatus(bookingId: ID!, status: BookingStatusEnum!): Booking!
+
+  """
+  Public. Changes which messages the holder of an unsubscribe link receives.
+  """
+  updateNotificationPreferences(preferences: [PreferenceInput!]!, token: String!): Preferences!
+
+  """
+  Admins only. A template with an unknown merge tag is refused.
+  """
+  updateNotificationTemplate(body: String!, kind: NotificationKindEnum!, subject: String!): Template!
+
+  """
+  Saves the two details a student gives before a first booking.
+  """
+  updateProfile(instrument: String!, phone: String!): Membership!
+
+  """
+  Admins only. Renames statuses for this workspace. Behaviour does not change.
+  """
+  updateStatusLabels(labels: [StatusLabelInput!]!): Workspace!
+}
+
+enum NotificationKindEnum {
+  CANCELLATION
+  CHANGE
+  CONFIRMATION
+}
+
+type OutboxResult {
+  remaining: Int!
+  sent: Int!
+}
+
+"""
+Someone staff can make a booking for.
+"""
+type Person {
+  id: ID!
+  name: String!
+  role: RoleEnum!
+}
+
+type Preference {
+  enabled: Boolean!
+  kind: NotificationKindEnum!
+}
+
+input PreferenceInput {
+  enabled: Boolean!
+  kind: NotificationKindEnum!
+}
+
+"""
+What the holder of an unsubscribe link may see and change.
+"""
+type Preferences {
+  personName: String!
+  preferences: [Preference!]!
+  workspaceName: String!
+}
+
+type Query {
+  """
+  Public. What the holder of an unsubscribe link has switched on.
+  """
+  notificationPreferences(token: String!): Preferences!
+
+  """
+  The signed-in user, or null.
+  """
+  viewer: Viewer
+
+  """
+  The workspace named by the X-Workspace-Id header.
+  """
+  workspace: Workspace!
+}
+
+enum RoleEnum {
+  ADMIN
+  STAFF
+  STUDENT
+}
+
+type Room {
+  capacity: Int!
+  closesMinute: Int!
+  equipment: [String!]!
+  id: ID!
+  name: String!
+
+  """
+  Minutes after local midnight.
+  """
+  opensMinute: Int!
+}
+
+type StatusLabel {
+  defaultLabel: String!
+  label: String!
+  status: BookingStatusEnum!
+}
+
+input StatusLabelInput {
+  """
+  Leave empty to use the default word.
+  """
+  label: String!
+  status: BookingStatusEnum!
+}
+
+type Template {
+  body: String!
+  isDefault: Boolean!
+  kind: NotificationKindEnum!
+  subject: String!
+}
+
+type TemplatePreview {
+  body: String!
+  problems: [String!]!
+  subject: String!
+}
+
+type TemplateTag {
+  description: String!
+  name: String!
+}
+
+"""
+The signed-in user.
+"""
+type Viewer {
+  email: String!
+  id: ID!
+  memberships: [Membership!]!
+  name: String!
+}
+
+"""
+The current workspace. Everything below it belongs to this workspace only.
+"""
+type Workspace {
+  bookings(from: ISO8601DateTime!, to: ISO8601DateTime!): [Booking!]!
+
+  """
+  Staff only.
+  """
+  deliveries(after: String, first: Int = 20): DeliveryPage!
+  id: ID!
+  me: Membership!
+
+  """
+  The viewer's own bookings from the last week onward.
+  """
+  myBookings: [Booking!]!
+  name: String!
+
+  """
+  Admins only.
+  """
+  notificationTemplates: [Template!]!
+
+  """
+  Staff only.
+  """
+  people: [Person!]!
+
+  """
+  Staff only.
+  """
+  queuedDeliveries: Int!
+  rooms: [Room!]!
+  statusLabels: [StatusLabel!]!
+  templatePreview(body: String!, subject: String!): TemplatePreview!
+  templateTags: [TemplateTag!]!
+  timeZone: String!
+  weeklyLimitMinutes: Int!
+}
+
+type WorkspaceSummary {
+  id: ID!
+  name: String!
+  timeZone: String!
+}
