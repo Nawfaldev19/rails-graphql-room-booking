@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Installs everything, builds the web app, prepares a database with fictional
+# demo data and starts the server. Run it again any time; it only does what is
+# still missing. Pass --reset to start again from fresh demo data.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+for tool in node npm ruby bundle; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "Room Booking needs $tool on your PATH. See the README for the versions." >&2
+    exit 1
+  fi
+done
+
+echo "== Installing web packages"
+npm install --no-audit --no-fund
+
+echo "== Building the web app"
+npm run build
+
+cd src/api
+echo "== Installing gems into src/api/vendor/bundle"
+bundle config set --local path vendor/bundle
+bundle install
+
+if [ "${1:-}" = "--reset" ]; then
+  echo "== Removing the old demo database"
+  rm -f storage/development.sqlite3 storage/development.sqlite3-shm storage/development.sqlite3-wal
+fi
+
+echo "== Preparing the database and demo data"
+bin/rails db:migrate db:seed
+
+port="${PORT:-3400}"
+echo
+echo "Room Booking is starting. Open http://localhost:${port}"
+exec bin/rails server -p "$port"
