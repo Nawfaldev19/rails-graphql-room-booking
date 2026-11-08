@@ -1,0 +1,99 @@
+plugins:
+  - rubocop-rails
+  - rubocop-rspec
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3
+  SuggestExtensions: false
+  Exclude:
+    - "vendor/**/*"
+    - "bin/*"
+    - "tmp/**/*"
+    - "storage/**/*"
+    - "coverage/**/*"
+
+# The house style follows Rails' own: double quotes and spaces inside array brackets.
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Layout/SpaceInsideArrayLiteralBrackets:
+  EnforcedStyle: space
+
+# Classes explain themselves in a comment where that helps; a cop cannot judge that.
+Style/Documentation:
+  Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# Size limits are raised for the three kinds of file that are long by nature.
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "db/**/*"
+    - "config/**/*"
+Metrics/MethodLength:
+  Max: 25
+  Exclude:
+    - "db/migrate/*"
+Metrics/AbcSize:
+  Max: 30
+  Exclude:
+    - "db/migrate/*"
+Metrics/ClassLength:
+  Max: 160
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+Metrics/CyclomaticComplexity:
+  Max: 10
+Metrics/PerceivedComplexity:
+  Max: 10
+
+# Specs here read as scenarios: several expectations tell one story.
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+RSpec/NestedGroups:
+  Max: 4
+RSpec/DescribeClass:
+  Enabled: false
+RSpec/SpecFilePathFormat:
+  Enabled: false
+RSpec/MultipleDescribes:
+  Enabled: false
+RSpec/InstanceVariable:
+  Enabled: false
+RSpec/LetSetup:
+  Enabled: false
+
+# Resolver methods must carry the name of their GraphQL field (isMine, canCancel).
+Naming/PredicateMethod:
+  Exclude:
+    - "app/graphql/**/*"
+Naming/PredicatePrefix:
+  Exclude:
+    - "app/graphql/**/*"
+# Request specs hold GraphQL documents, which read better unbroken.
+Layout/LineLength:
+  Max: 125
+  Exclude:
+    - "spec/requests/**/*"
+# One language only; messages stay next to the rule they explain.
+Rails/I18nLocaleTexts:
+  Enabled: false
+# The trigger SQL is kept on several lines so it stays readable in the database.
+Rails/SquishedSQLHeredocs:
+  Exclude:
+    - "db/migrate/*"
+
+# Raw SQL in specs is deliberate: they go around the application to test the database.
+Rails/SkipsModelValidations:
+  Exclude:
+    - "spec/**/*"
+# The single migration creates everything, including composite keys the cop does not know.
+Rails/CreateTableWithTimestamps:
+  Enabled: false
+Rails/BulkChangeTable:
+  Enabled: false
