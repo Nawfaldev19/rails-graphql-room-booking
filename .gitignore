@@ -1,0 +1,23 @@
+node_modules/
+coverage/
+playwright-report/
+test-results/
+.env
+*.log
+.DS_Store
+
+# Rails
+src/api/vendor/bundle/
+src/api/.bundle/
+src/api/coverage/
+src/api/storage/*
+!src/api/storage/.keep
+src/api/log/*
+!src/api/log/.keep
+src/api/tmp/*
+!src/api/tmp/.keep
+!src/api/tmp/pids/
+src/api/tmp/pids/*
+!src/api/tmp/pids/.keep
+# The built web app, produced by "npm run build".
+src/api/public/
