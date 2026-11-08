@@ -1,0 +1,2 @@
+class RateBucket < ApplicationRecord
+end
