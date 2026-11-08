@@ -1,0 +1,17 @@
+node_modules
+coverage
+playwright-report
+test-results
+.env
+.github
+docs
+tests
+*.md
+src/api/vendor/bundle
+src/api/.bundle
+src/api/storage/*.sqlite3*
+src/api/log
+src/api/tmp
+src/api/coverage
+src/api/public
+src/api/spec

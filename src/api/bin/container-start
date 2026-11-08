@@ -1,0 +1,21 @@
+#!/bin/sh
+# Start-up for the container image.
+#
+# Rails needs a signing secret in production. If none was given, one is made on
+# first start and kept in the storage volume, so no secret is ever built into the
+# image or written in a compose file.
+set -e
+
+if [ -z "${SECRET_KEY_BASE:-}" ]; then
+  secret_file="storage/secret_key_base"
+  if [ ! -s "$secret_file" ]; then
+    ruby -rsecurerandom -e 'print SecureRandom.hex(64)' > "$secret_file"
+    chmod 600 "$secret_file"
+  fi
+  SECRET_KEY_BASE="$(cat "$secret_file")"
+  export SECRET_KEY_BASE
+fi
+
+# Both steps do nothing when they have already been applied.
+bin/rails db:migrate db:seed
+exec bin/rails server -b 0.0.0.0 -p "${PORT:-3400}"

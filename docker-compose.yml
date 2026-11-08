@@ -1,0 +1,21 @@
+# One command to run the production build: docker compose up --build
+#
+# Rails needs a signing secret in production. Set SECRET_KEY_BASE in a .env file
+# next to this one to choose it yourself (see .env.example). If you do not, the
+# container makes one on first start and keeps it in the data volume.
+services:
+  room_booking:
+    build: .
+    ports:
+      - '3400:3400'
+    environment:
+      PORT: 3400
+      PUBLIC_URL: http://localhost:3400
+      DATABASE_PATH: storage/production.sqlite3
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
+    volumes:
+      - room-booking-data:/app/storage
+    restart: unless-stopped
+
+volumes:
+  room-booking-data:
